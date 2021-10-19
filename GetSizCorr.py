@@ -7,8 +7,8 @@ from scipy.optimize import curve_fit
 
 eV=27.2114
 
-"vmad"
-vmad=3.0787488096677436/11.120467409715490
+"vmad from Markus' code"
+vmad=2.64209138414202/10.267181959
 
 #vmadC2C=[vmadC2CP300,vmadC2CP350,vmadC2CP400,vmadC2CP250]
 
@@ -25,6 +25,8 @@ def line(x,a,b):
 #accuracy
 
 def getSizeCorr(SofK,Kgrid,cutoff,vmad,Sigma=[None]):
+    # SofK=Ne*See(k,Ne)-Np*See(k,Np)
+    # Sigma=Var(SofK)
     ind=numpy.where(Kgrid**2<cutoff)[0]
     sind=0
     if(Sigma[0]!=None): #Sigma is optional
@@ -44,26 +46,30 @@ def getSizeCorr(SofK,Kgrid,cutoff,vmad,Sigma=[None]):
 
 
 "BragPicks corrected S(K) for C2C"
-M=108
-
-Scordata=numpy.stack((numpy.stack(((numpy.loadtxt(('c%d/C2cp400t02np32%d.rhok2twist' % (c,k)),skiprows=2,
+M=32
+name='rmc'
+nconf=1
+nelec=4
+out_name='rmc_corr'
+Scordata=numpy.stack((numpy.stack(((numpy.loadtxt(('c%d/%s%d.rhok2twist' % (c,name,k)),skiprows=2,
                                                                usecols=(range(10,M*4+8,4))) -
-                                    numpy.loadtxt(('c%d/C2cp400t02np32%d.rhok2twist' % (c,k)),skiprows=2,
+                                    numpy.loadtxt(('c%d/%s%d.rhok2twist' % (c,name,k)),skiprows=2,
                                                                usecols=(range(11,M*4+8,4))))[:150]
-                              for k in range(-6,7,2))
-                         )for c in range(1,25)))
+                              for k in range(-nelec,nelec+1,2))
+                         )for c in range(1,nconf+1)))
 #KgridP300 = numpy.loadtxt('C2CP300/RMC/rmc0.rhok2twist',skiprows=2,usecols=(0))
-"K grid for C2C"
-Kgrid=numpy.stack((numpy.stack(((numpy.loadtxt(('c%d/C2cp400t02np32%d.rhok2twist' % (c,k)),skiprows=2,
+"K grid "
+Kgrid=numpy.stack((numpy.stack(((numpy.loadtxt(('c%d/%s%d.rhok2twist' % (c,name,k)),skiprows=2,
                                                                usecols=(0)))[:150]
-                              for k in range(-6,7,2))
-                         )for c in range(1,25)))
+                              for k in range(-nelec,nelec+1,2))
+                         )for c in range(1,nconf+1)))
 
-"get correction for C2C"
-CorrAv=numpy.zeros((7,2))
-for n in range(7):
-    CorrAv[n]=getSizeCorr((numpy.average(Scordata[:,n],axis=(0,2))-numpy.average(Scordata[:,3],axis=(0,2))),
+"get correction "
+CorrAv=numpy.zeros((nelec+1,2))
+for n in range(nelec+1):              
+    CorrAv[n]=getSizeCorr((numpy.average(Scordata[:,n],axis=(0,2))-numpy.average(Scordata[:,int(nelec/2)],axis=(0,2))),
                            Kgrid[0,n],cutoff=1.5,vmad=vmad,
-                           Sigma=numpy.sqrt((numpy.var(Scordata[:,n],axis=(0,2))+numpy.var(Scordata[:,3],axis=(0,2)))/107.))
+                           Sigma=numpy.sqrt((numpy.var(Scordata[:,n],axis=(0,2))+numpy.var(Scordata[:,int(nelec/2)],
+                               axis=(0,2)))/(M-1.)))
 
-numpy.savetxt('C2CT200P400corr_av.out',CorrAvC2C[:,0])
+numpy.savetxt('%s.out' % out_name,CorrAv[:,0])
