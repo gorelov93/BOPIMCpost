@@ -68,7 +68,7 @@ Kgrid=numpy.stack((numpy.stack(((numpy.loadtxt(('c%d/%s%d.rhok2twist' % (c,name,
 CorrAv=numpy.zeros((nelec+1,2))
 for n in range(nelec+1):              
     CorrAv[n]=getSizeCorr((numpy.average(Scordata[:,n],axis=(0,2))-numpy.average(Scordata[:,int(nelec/2)],axis=(0,2))),
-                           Kgrid[0,n],cutoff=1.5,vmad=vmad,
+                           Kgrid[0,n],cutoff=1.25,vmad=vmad,
                            Sigma=numpy.sqrt((numpy.var(Scordata[:,n],axis=(0,2))+numpy.var(Scordata[:,int(nelec/2)],
                                axis=(0,2)))/(M-1.)))
 

@@ -36,7 +36,7 @@ def GC_QMC(data,Vdata,mbeg,mend,mstep,Theta,nelec):
                 #print m*27.2114
                 a+=mstep
     print(a*27.2114)
-    plt.plot(mu,N)
+    plt.plot(mu,N,'o')
     plt.show()
     return numpy.stack((mu,N,E,VE,VN)) #,(a)*27.2114
 
@@ -50,22 +50,29 @@ data=[]
 Vdata=[]
 for i in range(nconf):
     data.append(numpy.stack((numpy.average(numpy.loadtxt(('c%d/%s%d.np.1.excite' % (i+1,name,k)),
-                                                               usecols=(range(0,M*2,2)), skiprows=10),axis=0)
+                                                               usecols=(range(0,M*2,2)), skiprows=100),axis=0)
                               for k in range(-nelec,nelec+1,2))
                             ))
     Vdata.append(numpy.stack((numpy.std(numpy.loadtxt(('c%d/%s%d.np.1.excite' % (i+1,name, k)),
-                                                          usecols=(range(0,M*2,2)), skiprows=10),axis=0)
+                                                          usecols=(range(0,M*2,2)), skiprows=100),axis=0)
                                for k in range(-nelec,nelec+1,2))
                              ))
 corr=numpy.loadtxt('%s.out' % corr_name)
 #saving size corrected energies for each twist, number of electrons, and nuclear configuation
 #corr * 2 factor of 2 comes from kinetic energy
 data_corr=(numpy.asarray(data)+numpy.transpose(numpy.tile(corr*2,(nconf,M,1)),axes=(0,2,1)))
+data=numpy.asarray(data)
 numpy.save('%s_corr' % name,data_corr)
+for i in range(nelec+1):
+    plt.plot(data[nconf-1,i],'o')
 
+plt.show()
 GC_data=[]
+GC_data_ns=[]
 for i in range(nconf):
-    GC_data.append(GC_QMC(data_corr[i],Vdata[i],mbeg=-0.1,mend=0.3,mstep=0.007,Theta=M,nelec=nelec))
+    GC_data.append(GC_QMC(data_corr[i],Vdata[i],mbeg=0.0,mend=1.3,mstep=0.007,Theta=M,nelec=nelec))
+
+    GC_data_ns.append(GC_QMC(data[i],Vdata[i],mbeg=0.0,mend=1.3,mstep=0.007,Theta=M,nelec=nelec))
 
 GC_data=numpy.asarray(GC_data)
 numpy.savetxt('%s_gcdat' % name ,numpy.transpose(GC_data[0]))
